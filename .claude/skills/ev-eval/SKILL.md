@@ -10,6 +10,29 @@ description: Оценка объявлений электромобилей на
 ## Workflow
 
 1. ВАЖНО: Открыть URL объявления через **Playwright MCP** сервер
+1.5. Закрыть cookie-баннер (один раз за сессию):
+```
+browser_run_code:
+  code: |
+    async (page) => {
+      try {
+        // Попытка 1: кнопка прямо на странице (основной вариант mobile.de)
+        const btn = await page.waitForSelector('button:has-text("Einverstanden")', { timeout: 5000 });
+        if (btn) await btn.click();
+      } catch(e1) {
+        try {
+          // Попытка 2: внутри iframe (запасной вариант)
+          const frame = await page.waitForSelector('iframe[id*="sp_message_iframe"]', { timeout: 3000 });
+          if (frame) {
+            const f = await frame.contentFrame();
+            const btn2 = await f.waitForSelector('button:has-text("Einverstanden")', { timeout: 3000 });
+            if (btn2) await btn2.click();
+          }
+        } catch(e2) { /* баннер не найден — ОК */ }
+      }
+      await page.waitForTimeout(1000);
+    }
+```
 2. Извлечь все характеристики автомобиля, информацию о дилере, комплектацию
 3. Проверить dealbreakers — если хоть один явно провален, вердикт ❌, анализ окончен
 4. Собрать nice-to-have опции
