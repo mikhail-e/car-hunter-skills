@@ -19,12 +19,12 @@ checked_ids = set(sys.argv[2].split(",")) if len(sys.argv) > 2 and sys.argv[2] e
 
 text = open(snapshot_path).read()
 
-# Ищем ID в URL-ах mobile.de
+# Ищем ID только в URL-ах реальных результатов поиска (ref=srp),
+# игнорируя рекомендации (ref=srx) и рекламу
 ids = []
-# Формат: /auto-inserat/.../ID.html
-ids += re.findall(r"/auto-inserat/[^/]+/(\d+)\.html", text)
-# Формат: details.html?id=ID или id=ID в параметрах
-ids += re.findall(r"id=(\d{6,})", text)
+for line in text.splitlines():
+    if "ref=srp" in line:
+        ids += re.findall(r"id=(\d{6,})", line)
 
 # Дедупликация с сохранением порядка
 seen = set()
