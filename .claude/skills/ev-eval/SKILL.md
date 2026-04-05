@@ -102,6 +102,10 @@ description: Оценка объявлений электромобилей на
 - Snapshot файлы сохранять в `temp/`. Папка `temp/` в `.gitignore`.
 - При работе со snapshot: искать ключевые слова (Kilometerstand, Leistung, Erstzulassung, Fahrzeughalter, Klimatisierung, Einparkhilfe, Wärmepumpe, Totwinkel, Abstandstempomat, unfallfrei, Sitzheizung, Head-Up, и т.д.)
 
+## Завершение
+
+После вывода результата закрыть браузер через `browser_close`.
+
 ## Язык
 
 Весь вывод — на русском. В таблицах русские или английские термины, не немецкие.
