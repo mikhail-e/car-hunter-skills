@@ -10,33 +10,12 @@ description: Оценка объявлений электромобилей на
 ## Workflow
 
 1. ВАЖНО: Открыть URL объявления через **Playwright MCP** сервер
-1.5. Закрыть cookie-баннер (один раз за сессию):
-```
-browser_run_code:
-  code: |
-    async (page) => {
-      try {
-        // Попытка 1: кнопка прямо на странице (основной вариант mobile.de)
-        const btn = await page.waitForSelector('button:has-text("Einverstanden")', { timeout: 5000 });
-        if (btn) await btn.click();
-      } catch(e1) {
-        try {
-          // Попытка 2: внутри iframe (запасной вариант)
-          const frame = await page.waitForSelector('iframe[id*="sp_message_iframe"]', { timeout: 3000 });
-          if (frame) {
-            const f = await frame.contentFrame();
-            const btn2 = await f.waitForSelector('button:has-text("Einverstanden")', { timeout: 3000 });
-            if (btn2) await btn2.click();
-          }
-        } catch(e2) { /* баннер не найден — ОК */ }
-      }
-      await page.waitForTimeout(1000);
-    }
-```
-2. Извлечь все характеристики автомобиля, информацию о дилере, комплектацию
-3. Проверить dealbreakers — если хоть один явно провален, вердикт ❌, анализ окончен
-4. Собрать nice-to-have опции
-5. Вывести результат в формате ниже
+2. Закрыть cookie-баннер (один раз за сессию): `browser_run_code` с `filename: scripts/dismiss_cookie.js`
+3. Сделать snapshot (`browser_snapshot`), сохранить в `temp/listing-<ID>.md`
+4. Извлечь все характеристики автомобиля, информацию о дилере, комплектацию
+5. Проверить dealbreakers — если хоть один явно провален, вердикт ❌, анализ окончен
+6. Собрать nice-to-have опции
+7. Вывести результат в формате ниже
 
 ## Dealbreakers
 
@@ -117,9 +96,11 @@ browser_run_code:
 
 **Вердикт: ✅/⚠️/❌** + краткое пояснение.
 
-## Работа с Bash
+## Работа с Playwright
 
 - Python-логика вынесена в `scripts/` — вызывать как `python3 scripts/<name>.py`
+- Snapshot файлы сохранять в `temp/`. Папка `temp/` в `.gitignore`.
+- При работе со snapshot: искать ключевые слова (Kilometerstand, Leistung, Erstzulassung, Fahrzeughalter, Klimatisierung, Einparkhilfe, Wärmepumpe, Totwinkel, Abstandstempomat, unfallfrei, Sitzheizung, Head-Up, и т.д.)
 
 ## Язык
 
