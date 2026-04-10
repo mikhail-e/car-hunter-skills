@@ -41,8 +41,10 @@ def load_config():
 
 def notify(title, message):
     subprocess.run([
-        "osascript", "-e",
-        f'display notification "{message}" with title "{title}" sound name "Glass"'
+        "terminal-notifier",
+        "-title", title,
+        "-message", message,
+        "-sound", "Glass",
     ])
 
 
