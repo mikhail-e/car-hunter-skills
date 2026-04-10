@@ -7,8 +7,11 @@
 """
 
 import json
+import os
 import subprocess
 import sys
+import time
+import traceback
 from datetime import datetime
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -49,67 +52,85 @@ def notify(title, message):
     ])
 
 
+def log(msg):
+    print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {msg}")
+
+
 def main():
-    config = load_config()
-    search_url = config["searchUrl"]
-    checked_ids = set(config["checkedIds"])
+    t0 = time.monotonic()
+    log(f"START pid={os.getpid()} python={sys.version.split()[0]}")
 
-    # Запомнить активное приложение до запуска браузера
-    prev_app = subprocess.run(
-        ["osascript", "-e", 'tell application "System Events" to get name of first application process whose frontmost is true'],
-        capture_output=True, text=True,
-    ).stdout.strip()
+    try:
+        config = load_config()
+        search_url = config["searchUrl"]
+        checked_ids = set(config["checkedIds"])
+        log(f"CONFIG checkedIds={len(checked_ids)}")
 
-    with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(
-            str(BROWSER_PROFILE),
-            headless=False,
-            channel="chrome",
-            args=["--disable-blink-features=AutomationControlled"],
-        )
-        page = ctx.pages[0] if ctx.pages else ctx.new_page()
+        # Запомнить активное приложение до запуска браузера
+        prev_app = subprocess.run(
+            ["osascript", "-e", 'tell application "System Events" to get name of first application process whose frontmost is true'],
+            capture_output=True, text=True,
+        ).stdout.strip()
 
-        # Вернуть фокус на предыдущее приложение (браузер уходит на задний план)
-        if prev_app:
-            subprocess.run([
-                "osascript", "-e",
-                'tell application "System Events" to set frontmost of '
-                f'process "{prev_app}" to true',
-            ])
+        with sync_playwright() as p:
+            ctx = p.chromium.launch_persistent_context(
+                str(BROWSER_PROFILE),
+                headless=False,
+                channel="chrome",
+                args=["--disable-blink-features=AutomationControlled"],
+            )
+            try:
+                page = ctx.pages[0] if ctx.pages else ctx.new_page()
 
-        page.goto(search_url, wait_until="domcontentloaded")
+                # Вернуть фокус на предыдущее приложение (браузер уходит на задний план)
+                if prev_app:
+                    subprocess.run([
+                        "osascript", "-e",
+                        'tell application "System Events" to set frontmost of '
+                        f'process "{prev_app}" to true',
+                    ])
 
-        # Закрыть cookie-баннер
-        try:
-            btn = page.wait_for_selector('button:has-text("Einverstanden")', timeout=5000)
-            if btn:
-                btn.click()
-                page.wait_for_timeout(2000)
-        except Exception:
-            pass
+                page.goto(search_url, wait_until="domcontentloaded", timeout=60000)
+                log("PAGE_LOADED")
 
-        # Дождаться появления результатов
-        try:
-            page.wait_for_selector('a[href*="/fahrzeuge/details.html?id="]', timeout=15000)
-        except Exception:
-            print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] ERROR: не удалось загрузить результаты (возможно, rate limit)")
-            ctx.close()
-            return
+                # Закрыть cookie-баннер
+                try:
+                    btn = page.wait_for_selector('button:has-text("Einverstanden")', timeout=5000)
+                    if btn:
+                        btn.click()
+                        page.wait_for_timeout(2000)
+                except Exception:
+                    pass
 
-        all_ids = page.evaluate(EXTRACT_IDS_JS)
-        ctx.close()
+                # Дождаться появления результатов
+                try:
+                    page.wait_for_selector('a[href*="/fahrzeuge/details.html?id="]', timeout=15000)
+                except Exception:
+                    log("ERROR: не удалось загрузить результаты (возможно, rate limit)")
+                    return
 
-    new_ids = [i for i in all_ids if i not in checked_ids]
-    total = len(all_ids)
-    new = len(new_ids)
+                all_ids = page.evaluate(EXTRACT_IDS_JS)
+                log(f"IDS_EXTRACTED count={len(all_ids)}")
+            finally:
+                ctx.close()
 
-    print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] TOTAL:{total} NEW:{new}")
-    for i in new_ids:
-        print(f"  {i}")
+        new_ids = [i for i in all_ids if i not in checked_ids]
+        total = len(all_ids)
+        new = len(new_ids)
 
-    if new > 0 and not DRY_RUN:
-        word = "объявление" if new == 1 else "объявлений" if new >= 5 else "объявления"
-        notify("Das Auto", f"Найдено {new} новых {word} EV на mobile.de")
+        log(f"TOTAL:{total} NEW:{new}")
+        for i in new_ids:
+            print(f"  {i}")
+
+        if new > 0 and not DRY_RUN:
+            word = "объявление" if new == 1 else "объявлений" if new >= 5 else "объявления"
+            notify("Das Auto", f"Найдено {new} новых {word} EV на mobile.de")
+
+    except Exception:
+        log(f"ERROR:\n{traceback.format_exc()}")
+    finally:
+        elapsed = time.monotonic() - t0
+        log(f"DONE {elapsed:.1f}s")
 
 
 if __name__ == "__main__":
