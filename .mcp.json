@@ -2,7 +2,7 @@
   "mcpServers": {
     "playwright": {
       "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--headless", "--output-dir", "/Users/michael/projects/Das Auto/.playwright-mcp"]
+      "args": ["-y", "@playwright/mcp@latest", "--output-dir", "/Users/michael/projects/Das Auto/.playwright-mcp"]
     }
   }
 }
