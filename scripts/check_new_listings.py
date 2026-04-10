@@ -15,6 +15,7 @@ from playwright.sync_api import sync_playwright
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = SCRIPT_DIR.parent
 CONFIG_PATH = PROJECT_DIR / "search-config.json"
+BROWSER_PROFILE = Path("/tmp/das-auto-browser-profile")
 
 DRY_RUN = "--dry-run" in sys.argv
 
@@ -50,12 +51,29 @@ def main():
     search_url = config["searchUrl"]
     checked_ids = set(config["checkedIds"])
 
+    # Запомнить активное приложение до запуска браузера
+    prev_app = subprocess.run(
+        ["osascript", "-e", 'tell application "System Events" to get name of first application process whose frontmost is true'],
+        capture_output=True, text=True,
+    ).stdout.strip()
+
     with sync_playwright() as p:
-        browser = p.chromium.launch(
+        ctx = p.chromium.launch_persistent_context(
+            str(BROWSER_PROFILE),
             headless=False,
-            args=["--window-position=-2000,-2000", "--window-size=1,1"],
+            channel="chrome",
+            args=["--disable-blink-features=AutomationControlled"],
         )
-        page = browser.new_page()
+        page = ctx.pages[0] if ctx.pages else ctx.new_page()
+
+        # Вернуть фокус на предыдущее приложение (браузер уходит на задний план)
+        if prev_app:
+            subprocess.run([
+                "osascript", "-e",
+                'tell application "System Events" to set frontmost of '
+                f'process "{prev_app}" to true',
+            ])
+
         page.goto(search_url, wait_until="domcontentloaded")
 
         # Закрыть cookie-баннер
@@ -63,12 +81,20 @@ def main():
             btn = page.wait_for_selector('button:has-text("Einverstanden")', timeout=5000)
             if btn:
                 btn.click()
-                page.wait_for_timeout(1000)
+                page.wait_for_timeout(2000)
         except Exception:
             pass
 
+        # Дождаться появления результатов
+        try:
+            page.wait_for_selector('a[href*="/fahrzeuge/details.html?id="]', timeout=15000)
+        except Exception:
+            print("ERROR: не удалось загрузить результаты (возможно, rate limit)")
+            ctx.close()
+            return
+
         all_ids = page.evaluate(EXTRACT_IDS_JS)
-        browser.close()
+        ctx.close()
 
     new_ids = [i for i in all_ids if i not in checked_ids]
     total = len(all_ids)
