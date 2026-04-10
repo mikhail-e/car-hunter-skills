@@ -9,6 +9,7 @@
 import json
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -91,7 +92,7 @@ def main():
         try:
             page.wait_for_selector('a[href*="/fahrzeuge/details.html?id="]', timeout=15000)
         except Exception:
-            print("ERROR: не удалось загрузить результаты (возможно, rate limit)")
+            print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] ERROR: не удалось загрузить результаты (возможно, rate limit)")
             ctx.close()
             return
 
@@ -102,7 +103,7 @@ def main():
     total = len(all_ids)
     new = len(new_ids)
 
-    print(f"TOTAL:{total} NEW:{new}")
+    print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] TOTAL:{total} NEW:{new}")
     for i in new_ids:
         print(f"  {i}")
 
