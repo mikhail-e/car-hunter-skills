@@ -58,6 +58,7 @@ def log(msg):
 
 def main():
     t0 = time.monotonic()
+    print()
     log(f"START pid={os.getpid()} python={sys.version.split()[0]}")
 
     try:
