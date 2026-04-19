@@ -2,3 +2,8 @@
 .DS_Store
 temp/
 docs/
+
+# Локальные рабочие копии (создаются из *.example)
+search-config.json
+evaluations.md
+launchd/com.dasauto.check-listings.plist
