@@ -43,5 +43,5 @@ Wäre es außerdem möglich, die weitere Kommunikation auf Englisch fortzuführe
 Vielen Dank im Voraus!
 
 Mit freundlichen Grüßen,
-Mikhail
+{{SENDER_NAME}}
 ```
