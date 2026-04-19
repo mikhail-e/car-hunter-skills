@@ -45,7 +45,7 @@ def load_config():
 
 def notify(title, message):
     subprocess.run([
-        "terminal-notifier",
+        "/usr/local/bin/terminal-notifier",
         "-title", title,
         "-message", message,
         "-sound", "Glass",
