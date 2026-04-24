@@ -1,4 +1,4 @@
-# Das Auto — EV search with Claude Code
+# Car Hunter Skills — EV search on mobile.de with Claude Code
 
 A personal assistant for finding a used electric car in Germany, built on [Claude Code](https://claude.com/claude-code). Three skills evaluate and search mobile.de listings; a Playwright script monitors for new ads; OCR pipeline handles scanned PDFs (contract, Fahrzeugbrief, CoC, etc.).
 

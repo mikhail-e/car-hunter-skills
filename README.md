@@ -1,4 +1,4 @@
-# Das Auto — поиск электромобиля с Claude Code
+# Car Hunter Skills — поиск электромобиля на mobile.de с Claude Code
 
 Персональный ассистент для поиска подержанного электромобиля в Германии на базе [Claude Code](https://claude.com/claude-code). Три скилла для оценки и поиска объявлений на mobile.de + Playwright-мониторинг новых машин + OCR документов (контракт, Fahrzeugbrief, CoC и т.д.).
 
