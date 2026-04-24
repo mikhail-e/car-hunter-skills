@@ -2,6 +2,8 @@
 .DS_Store
 temp/
 docs/
+__pycache__/
+*.pyc
 
 # Локальные рабочие копии (создаются из *.example)
 search-config.json
