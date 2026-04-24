@@ -38,8 +38,8 @@
 ## Установка
 
 ```bash
-git clone <url-репо> Das_Auto
-cd Das_Auto
+git clone https://github.com/mikhail-e/car-hunter-skills.git
+cd car-hunter-skills
 
 # Скопировать примеры в рабочие файлы (они в .gitignore)
 cp search-config.example.json search-config.json
